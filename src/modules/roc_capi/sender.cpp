@@ -121,7 +121,7 @@ size_t roc_sender_send_packet(
                 " decoder_bufsz=%lu, max_bufsz=%lu, n_channels=%lu",
                 (unsigned long)buffer_size,        //
                 (unsigned long)sender->buffer->max_size(), //
-                (size_t)2);
+                (unsigned long)2);
         }
 
         sender->buffer->set_size(buffer_size);
