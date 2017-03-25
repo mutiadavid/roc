@@ -10,7 +10,7 @@
 #include "roc_config/config.h"
 #include "roc_core/panic.h"
 #include "roc_core/log.h"
-#include "roc_fec/ldpc_block_encoder.h"
+#include "roc_fec/of_block_encoder.h"
 
 namespace roc {
 namespace fec {
@@ -21,7 +21,7 @@ const size_t SYMB_SZ = ROC_CONFIG_DEFAULT_PACKET_SIZE;
 
 } // namespace
 
-LDPC_BlockEncoder::LDPC_BlockEncoder(core::IByteBufferComposer& composer)
+OF_BlockEncoder::OF_BlockEncoder(core::IByteBufferComposer& composer)
     : of_inst_(NULL)
     , composer_(composer)
     , sym_tab_(N_DATA_PACKETS + N_FEC_PACKETS)
@@ -62,11 +62,11 @@ LDPC_BlockEncoder::LDPC_BlockEncoder(core::IByteBufferComposer& composer)
     }
 }
 
-LDPC_BlockEncoder::~LDPC_BlockEncoder() {
+OF_BlockEncoder::~OF_BlockEncoder() {
     of_release_codec_instance(of_inst_);
 }
 
-void LDPC_BlockEncoder::write(size_t index, const core::IByteBufferConstSlice& buffer) {
+void OF_BlockEncoder::write(size_t index, const core::IByteBufferConstSlice& buffer) {
     if (index >= N_DATA_PACKETS) {
         roc_panic("ldpc encoder: can't write more than %lu data buffers",
                   (unsigned long)N_DATA_PACKETS);
@@ -85,7 +85,7 @@ void LDPC_BlockEncoder::write(size_t index, const core::IByteBufferConstSlice& b
     buffers_[index] = buffer;
 }
 
-void LDPC_BlockEncoder::commit() {
+void OF_BlockEncoder::commit() {
     for (size_t i = 0; i < N_FEC_PACKETS; ++i) {
         if (core::IByteBufferPtr buffer = composer_.compose()) {
             buffer->set_size(SYMB_SZ);
@@ -104,7 +104,7 @@ void LDPC_BlockEncoder::commit() {
     }
 }
 
-core::IByteBufferConstSlice LDPC_BlockEncoder::read(size_t index) {
+core::IByteBufferConstSlice OF_BlockEncoder::read(size_t index) {
     if (index >= N_FEC_PACKETS) {
         roc_panic("ldpc encoder: can't read more than %lu fec buffers",
                   (unsigned long)N_FEC_PACKETS);
@@ -113,7 +113,7 @@ core::IByteBufferConstSlice LDPC_BlockEncoder::read(size_t index) {
     return buffers_[N_DATA_PACKETS + index];
 }
 
-void LDPC_BlockEncoder::reset() {
+void OF_BlockEncoder::reset() {
     for (size_t i = 0; i < buffers_.size(); ++i) {
         sym_tab_[i] = NULL;
         buffers_[i] = core::IByteBufferConstSlice();

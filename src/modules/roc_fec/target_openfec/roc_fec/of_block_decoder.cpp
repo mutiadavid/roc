@@ -10,7 +10,7 @@
 #include "roc_config/config.h"
 #include "roc_core/panic.h"
 #include "roc_core/log.h"
-#include "roc_fec/ldpc_block_decoder.h"
+#include "roc_fec/of_block_decoder.h"
 
 namespace roc {
 namespace fec {
@@ -21,7 +21,7 @@ const size_t SYMB_SZ = ROC_CONFIG_DEFAULT_PACKET_SIZE;
 
 } // namespace
 
-LDPC_BlockDecoder::LDPC_BlockDecoder(core::IByteBufferComposer& composer)
+OF_BlockDecoder::OF_BlockDecoder(core::IByteBufferComposer& composer)
     : of_inst_(NULL)
     , of_inst_inited_(false)
     , composer_(composer)
@@ -52,13 +52,13 @@ LDPC_BlockDecoder::LDPC_BlockDecoder(core::IByteBufferComposer& composer)
     of_inst_params_->encoding_symbol_length = SYMB_SZ;
     of_verbosity = 0;
 
-    LDPC_BlockDecoder::reset(); // non-virtual call from ctor
+    OF_BlockDecoder::reset(); // non-virtual call from ctor
 }
 
-LDPC_BlockDecoder::~LDPC_BlockDecoder() {
+OF_BlockDecoder::~OF_BlockDecoder() {
 }
 
-void LDPC_BlockDecoder::write(size_t index, const core::IByteBufferConstSlice& buffer) {
+void OF_BlockDecoder::write(size_t index, const core::IByteBufferConstSlice& buffer) {
     if (index >= N_DATA_PACKETS + N_FEC_PACKETS) {
         roc_panic("ldpc decoder: index out of bounds: index=%lu, size=%lu",
                   (unsigned long)index, (unsigned long)(N_DATA_PACKETS + N_FEC_PACKETS));
@@ -87,7 +87,7 @@ void LDPC_BlockDecoder::write(size_t index, const core::IByteBufferConstSlice& b
     received_[index] = true;
 }
 
-core::IByteBufferConstSlice LDPC_BlockDecoder::repair(size_t index) {
+core::IByteBufferConstSlice OF_BlockDecoder::repair(size_t index) {
     if (!buffers_[index] && !defecation_attempted_) {
         defecation_attempted_ = true;
 
@@ -106,7 +106,7 @@ core::IByteBufferConstSlice LDPC_BlockDecoder::repair(size_t index) {
     return buffers_[index];
 }
 
-void LDPC_BlockDecoder::reset() {
+void OF_BlockDecoder::reset() {
     report_();
 
     packets_rcvd_ = 0;
@@ -143,7 +143,7 @@ void LDPC_BlockDecoder::reset() {
     }
 }
 
-void LDPC_BlockDecoder::report_() {
+void OF_BlockDecoder::report_() {
     size_t n_lost = 0, n_repaired = 0;
 
     char status1[N_DATA_PACKETS + 1] = {};
@@ -182,7 +182,7 @@ void LDPC_BlockDecoder::report_() {
             status2);
 }
 
-void* LDPC_BlockDecoder::make_buffer_(const size_t index) {
+void* OF_BlockDecoder::make_buffer_(const size_t index) {
     roc_panic_if_not(index < N_DATA_PACKETS + N_FEC_PACKETS);
 
     if (core::IByteBufferPtr buffer = composer_.compose()) {
@@ -195,15 +195,15 @@ void* LDPC_BlockDecoder::make_buffer_(const size_t index) {
     }
 }
 
-void* LDPC_BlockDecoder::source_cb_(void* context, uint32_t size, uint32_t index) {
+void* OF_BlockDecoder::source_cb_(void* context, uint32_t size, uint32_t index) {
     roc_panic_if(context == NULL);
     roc_panic_if(size != SYMB_SZ);
 
-    LDPC_BlockDecoder& self = *(LDPC_BlockDecoder*)context;
+    OF_BlockDecoder& self = *(OF_BlockDecoder*)context;
     return self.make_buffer_(index);
 }
 
-void* LDPC_BlockDecoder::repair_cb_(void*, uint32_t, uint32_t) {
+void* OF_BlockDecoder::repair_cb_(void*, uint32_t, uint32_t) {
     return NULL;
 }
 
