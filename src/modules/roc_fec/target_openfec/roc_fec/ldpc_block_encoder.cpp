@@ -26,26 +26,38 @@ LDPC_BlockEncoder::LDPC_BlockEncoder(core::IByteBufferComposer& composer)
     , composer_(composer)
     , sym_tab_(N_DATA_PACKETS + N_FEC_PACKETS)
     , buffers_(N_DATA_PACKETS + N_FEC_PACKETS) {
-    roc_log(LOG_TRACE, "initializing ldpc encoder");
 
-    of_ldpc_parameters params;
+    // Use Reed-Solomon Codec.
+    if (codec_id_ == OF_CODEC_REED_SOLOMON_GF_2_M_STABLE){
+        roc_log(LOG_TRACE, "initializing Reed-Solomon encoder");
 
+        fec_codec_params_.rs_params_.m = 8;
+
+        of_inst_params_ = (of_parameters_t*)&fec_codec_params_.rs_params_;
+
+    // Use LDPC-Staircase.
+    } else {
+        roc_log(LOG_TRACE, "initializing LDPC encoder");
+
+        fec_codec_params_.ldpc_params_.prng_seed = 1297501556;
+        fec_codec_params_.ldpc_params_.N1 = 7;
+
+        of_inst_params_ = (of_parameters_t*)&fec_codec_params_.ldpc_params_; 
+    }
+
+    of_inst_params_->nb_source_symbols = N_DATA_PACKETS;
+    of_inst_params_->nb_repair_symbols = N_FEC_PACKETS;
+    of_inst_params_->encoding_symbol_length = SYMB_SZ;
     of_verbosity = 0;
 
     if (OF_STATUS_OK != of_create_codec_instance(
-                            &of_inst_, OF_CODEC_LDPC_STAIRCASE_STABLE, OF_ENCODER, 0)) {
+                            &of_inst_, codec_id_, OF_ENCODER, 0)) {
         roc_panic("ldpc encoder: of_create_codec_instance() failed");
     }
 
     roc_panic_if(of_inst_ == NULL);
 
-    params.nb_source_symbols = N_DATA_PACKETS;
-    params.nb_repair_symbols = N_FEC_PACKETS;
-    params.encoding_symbol_length = SYMB_SZ;
-    params.prng_seed = 1297501556;
-    params.N1 = 7;
-
-    if (OF_STATUS_OK != of_set_fec_parameters(of_inst_, (of_parameters_t*)&params)) {
+    if (OF_STATUS_OK != of_set_fec_parameters(of_inst_, of_inst_params_)) {
         roc_panic("ldpc encoder: of_set_fec_parameters() failed");
     }
 }

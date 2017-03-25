@@ -28,14 +28,28 @@ LDPC_BlockDecoder::LDPC_BlockDecoder(core::IByteBufferComposer& composer)
     , buffers_(N_DATA_PACKETS + N_FEC_PACKETS)
     , sym_tab_(N_DATA_PACKETS + N_FEC_PACKETS)
     , received_(N_DATA_PACKETS + N_FEC_PACKETS) {
-    roc_log(LOG_TRACE, "initializing ldpc decoder");
 
-    of_inst_params_.nb_source_symbols = N_DATA_PACKETS;
-    of_inst_params_.nb_repair_symbols = N_FEC_PACKETS;
-    of_inst_params_.encoding_symbol_length = SYMB_SZ;
-    of_inst_params_.prng_seed = 1297501556;
-    of_inst_params_.N1 = 7;
+    // Use Reed-Solomon Codec.
+    if (codec_id_ == OF_CODEC_REED_SOLOMON_GF_2_M_STABLE){
+        roc_log(LOG_TRACE, "initializing Reed-Solomon decoder");
 
+        fec_codec_params_.rs_params_.m = 8;
+
+        of_inst_params_ = (of_parameters_t*)&fec_codec_params_.rs_params_;
+
+    // Use LDPC-Staircase.
+    } else {
+        roc_log(LOG_TRACE, "initializing LDPC decoder");
+
+        fec_codec_params_.ldpc_params_.prng_seed = 1297501556;
+        fec_codec_params_.ldpc_params_.N1 = 7;
+
+        of_inst_params_ = (of_parameters_t*)&fec_codec_params_.ldpc_params_; 
+    }
+
+    of_inst_params_->nb_source_symbols = N_DATA_PACKETS;
+    of_inst_params_->nb_repair_symbols = N_FEC_PACKETS;
+    of_inst_params_->encoding_symbol_length = SYMB_SZ;
     of_verbosity = 0;
 
     LDPC_BlockDecoder::reset(); // non-virtual call from ctor
@@ -102,21 +116,23 @@ void LDPC_BlockDecoder::reset() {
     }
 
     if (OF_STATUS_OK != of_create_codec_instance(
-                            &of_inst_, OF_CODEC_LDPC_STAIRCASE_STABLE, OF_DECODER, 0)) {
+                            &of_inst_, codec_id_, OF_DECODER, 0)) {
         roc_panic("ldpc decoder: of_create_codec_instance() failed");
     }
 
     roc_panic_if(of_inst_ == NULL);
 
     if (OF_STATUS_OK
-        != of_set_fec_parameters(of_inst_, (of_parameters_t*)&of_inst_params_)) {
+        != of_set_fec_parameters(of_inst_, of_inst_params_)) {
         roc_panic("ldpc decoder: of_set_fec_parameters() failed");
     }
 
     of_inst_inited_ = true;
 
     if (OF_STATUS_OK
-        != of_set_callback_functions(of_inst_, source_cb_, repair_cb_, (void*)this)) {
+        != of_set_callback_functions(of_inst_, source_cb_,
+            codec_id_ == OF_CODEC_REED_SOLOMON_GF_2_M_STABLE ? NULL : repair_cb_,
+            (void*)this)) {
         roc_panic("ldpc decoder: of_set_callback_functions() failed");
     }
 

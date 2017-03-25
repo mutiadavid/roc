@@ -55,6 +55,8 @@ public:
     virtual void reset();
 
 private:
+    static const of_codec_id_t codec_id_ = OF_CODEC_REED_SOLOMON_GF_2_M_STABLE;
+
     static const size_t N_DATA_PACKETS = ROC_CONFIG_DEFAULT_FEC_BLOCK_DATA_PACKETS;
     static const size_t N_FEC_PACKETS = ROC_CONFIG_DEFAULT_FEC_BLOCK_REDUNDANT_PACKETS;
 
@@ -67,7 +69,12 @@ private:
 
     of_session_t* of_inst_;
     bool of_inst_inited_;
-    of_ldpc_parameters of_inst_params_;
+    of_parameters_t *of_inst_params_;
+
+    union {
+        of_ldpc_parameters ldpc_params_;
+        of_rs_2_m_parameters_t rs_params_;
+    } fec_codec_params_;
 
     core::IByteBufferComposer& composer_;
 
