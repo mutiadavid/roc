@@ -9,16 +9,32 @@
 
 #include "roc_core/log.h"
 #include "roc_packet/interleaver.h"
+#include "roc_core/random.h"
 
 namespace roc {
 namespace packet {
 
-const size_t Interleaver::tx_seq_[delay_len_] = { 4, 2, 6, 0, 5, 1, 3, 8, 7 };
-
-Interleaver::Interleaver(packet::IPacketWriter& output)
+Interleaver::Interleaver(packet::IPacketWriter& output, const size_t delay_len)
     : output_(output)
-    , pack_store_(delay_len_) {
+    , delay_len_(delay_len)
+    , pack_store_(delay_len) {
     roc_log(LOG_TRACE, "initializing interleaver");
+
+    for (size_t i = 0; i < delay_len_; ++i){
+        tx_seq_[i] = i;
+    }
+    for (size_t i = delay_len_; i > 0; --i){
+        const size_t j = core::random(0, (unsigned int)i-1);
+        const size_t buff = tx_seq_[i-1];
+        tx_seq_[i-1] = tx_seq_[j];
+        tx_seq_[j] = buff;
+    }
+
+    roc_log(LOG_DEBUG, "interleaver block delay_len_: %u", (unsigned)delay_len_);
+    for (size_t i = 0; i < delay_len_; ++i){
+        roc_log(LOG_DEBUG, "\t[%u]: %u", (unsigned)i, (unsigned)tx_seq_[i]);
+    }
+
 
     next_2_send_ = 0;
     next_2_put_ = 0;
