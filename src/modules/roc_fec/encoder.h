@@ -23,6 +23,7 @@
 #include "roc_packet/ipacket_composer.h"
 #include "roc_packet/ipacket.h"
 #include "roc_packet/ifec_packet.h"
+#include "roc_packet/interleaver.h"
 
 #include "roc_fec/iblock_encoder.h"
 
@@ -74,6 +75,8 @@ private:
     packet::seqnum_t cur_session_fec_seqnum_;
 
     size_t cur_data_pack_i_;
+
+    packet::Interleaver interleaver_;
 };
 
 } // namespace fec

@@ -26,7 +26,8 @@ Encoder::Encoder(IBlockEncoder& block_encoder,
     , first_packet_(true)
     , cur_block_seqnum_(0)
     , cur_session_fec_seqnum_((packet::seqnum_t)core::random(packet::seqnum_t(-1)))
-    , cur_data_pack_i_(0) {
+    , cur_data_pack_i_(0)
+    , interleaver_(output, ROC_CONFIG_DEFAULT_FEC_BLOCK_REDUNDANT_PACKETS) {
 }
 
 void Encoder::write(const packet::IPacketPtr& p) {
@@ -59,7 +60,8 @@ void Encoder::write(const packet::IPacketPtr& p) {
                 cur_session_fec_seqnum_ + i, i == 0);
 
             if (fec_p) {
-                packet_output_.write(fec_p);
+                // packet_output_.write(fec_p);
+                interleaver_.write(fec_p);
             } else {
                 roc_log(LogDebug, "fec encoder: can't create fec packet");
             }
