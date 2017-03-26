@@ -49,6 +49,9 @@ public:
     size_t window_size() const;
 
 private:
+    //! Initialize tx_seq_ to a new randomized sequence.
+    void reinit_seq();
+
     //! Transmitter.
     packet::IPacketWriter& output_;
     //! Number of packets in block.
