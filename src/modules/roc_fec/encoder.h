@@ -24,6 +24,7 @@
 #include "roc_packet/ipacket.h"
 #include "roc_packet/ifec_packet.h"
 #include "roc_packet/interleaver.h"
+#include "roc_packet/packet_queue.h"
 
 #include "roc_fec/iblock_encoder.h"
 
@@ -77,6 +78,7 @@ private:
     size_t cur_data_pack_i_;
 
     packet::Interleaver interleaver_;
+    packet::PacketQueue intrlvlr_q_ ;
 };
 
 } // namespace fec

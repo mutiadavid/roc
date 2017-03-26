@@ -27,7 +27,7 @@ Encoder::Encoder(IBlockEncoder& block_encoder,
     , cur_block_seqnum_(0)
     , cur_session_fec_seqnum_((packet::seqnum_t)core::random(packet::seqnum_t(-1)))
     , cur_data_pack_i_(0)
-    , interleaver_(output, ROC_CONFIG_DEFAULT_FEC_BLOCK_REDUNDANT_PACKETS) {
+    , interleaver_(intrlvlr_q_, ROC_CONFIG_DEFAULT_FEC_BLOCK_REDUNDANT_PACKETS) {
 }
 
 void Encoder::write(const packet::IPacketPtr& p) {
@@ -46,6 +46,11 @@ void Encoder::write(const packet::IPacketPtr& p) {
     }
 
     packet_output_.write(p);
+
+    packet::IPacketConstPtr qp = intrlvlr_q_.read();
+    if (qp) {
+        packet_output_.write(const_cast<packet::IPacket*>(qp.get()));
+    }
 
     block_encoder_.write(cur_data_pack_i_, p->raw_data());
 
