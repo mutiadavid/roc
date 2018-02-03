@@ -134,7 +134,7 @@ ReceiverSession::ReceiverSession(const SessionConfig& config,
 
     if (config.resampling) {
         resampler_.reset(new (allocator_)
-                             audio::Resampler(*areader, sample_buffer_pool, allocator,
+                             audio::ResamplerReader(*areader, sample_buffer_pool, allocator,
                                               config.resampler, config.channels),
                          allocator_);
         if (!resampler_ || !resampler_->valid()) {
