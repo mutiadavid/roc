@@ -8,6 +8,7 @@
 
 #include <sox.h>
 #include <stdio.h>
+#include <string.h>
 
 #include "roc_core/log.h"
 #include "roc_core/macros.h"
@@ -134,6 +135,18 @@ bool sox_defaults(const char** name, const char** type) {
 
     roc_log(LogDebug, "detected defaults: name=%s type=%s", *name, *type);
     return true;
+}
+
+bool sox_use_pulseaudio(const char* type) {
+    if (type && *type) {
+        return strcmp(type, "pulseaudio") == 0;
+    }
+
+    if (const char* default_type = default_driver()) {
+        return strcmp(default_type, "pulseaudio") == 0;
+    }
+
+    return false;
 }
 
 } // namespace sndio

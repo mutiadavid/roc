@@ -21,6 +21,9 @@ void sox_setup();
 //! Detect defaults for name and type.
 bool sox_defaults(const char** name, const char** type);
 
+//! Check whether we should use PulseAudio.
+bool sox_use_pulseaudio(const char* type);
+
 } // namespace sndio
 } // namespace roc
 

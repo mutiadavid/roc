@@ -17,6 +17,10 @@
 #include "roc_sndio/sox.h"
 #include "roc_sndio/sox_writer.h"
 
+#ifdef ROC_TARGET_PULSEAUDIO
+#include "roc_sndio/pulse_writer.h"
+#endif // ROC_TARGET_PULSEAUDIO
+
 #include "roc_recv/cmdline.h"
 
 using namespace roc;
@@ -199,19 +203,28 @@ int main(int argc, char** argv) {
     packet::PacketPool packet_pool(allocator, 1);
 
     sndio::SoxWriter sox_writer(allocator, config.channels, sample_rate);
+    sndio::IWriter* writer = &sox_writer;
 
-    if (!sox_writer.open(args.output_arg, args.type_arg)) {
+#ifdef ROC_TARGET_PULSEAUDIO
+    sndio::PulseWriter pulse_writer(config.channels, sample_rate);
+
+    if (sndio::sox_use_pulseaudio(args.type_arg)) {
+        writer = &pulse_writer;
+    }
+#endif // ROC_TARGET_PULSEAUDIO
+
+    if (!writer->open(args.output_arg, args.type_arg)) {
         roc_log(LogError, "can't open output file or device: %s %s", args.output_arg,
                 args.type_arg);
         return 1;
     }
 
-    config.timing = sox_writer.is_file();
-    config.sample_rate = sox_writer.sample_rate();
+    config.timing = writer->is_file();
+    config.sample_rate = writer->sample_rate();
 
     if (config.sample_rate == 0) {
         roc_log(LogError, "can't detect output sample rate, try to set it "
-                          "explicitly with --rate option");
+                          "explicitly using --rate option");
         return 1;
     }
 
@@ -224,7 +237,7 @@ int main(int argc, char** argv) {
         return 1;
     }
 
-    sndio::Player player(sample_buffer_pool, receiver, sox_writer, args.oneshot_flag);
+    sndio::Player player(sample_buffer_pool, receiver, *writer, args.oneshot_flag);
     if (!player.valid()) {
         roc_log(LogError, "can't create player");
         return 1;
@@ -282,8 +295,6 @@ int main(int argc, char** argv) {
     if (config.default_session.fec.codec != fec::NoCodec) {
         trx.remove_port(repair_port.address);
     }
-
-    sox_writer.close();
 
     return status;
 }
