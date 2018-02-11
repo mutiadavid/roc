@@ -198,16 +198,16 @@ int main(int argc, char** argv) {
     core::BufferPool<audio::sample_t> sample_buffer_pool(allocator, MaxFrameSize, 1);
     packet::PacketPool packet_pool(allocator, 1);
 
-    sndio::SoxWriter writer(allocator, config.channels, sample_rate);
+    sndio::SoxWriter sox_writer(allocator, config.channels, sample_rate);
 
-    if (!writer.open(args.output_arg, args.type_arg)) {
+    if (!sox_writer.open(args.output_arg, args.type_arg)) {
         roc_log(LogError, "can't open output file or device: %s %s", args.output_arg,
                 args.type_arg);
         return 1;
     }
 
-    config.timing = writer.is_file();
-    config.sample_rate = writer.sample_rate();
+    config.timing = sox_writer.is_file();
+    config.sample_rate = sox_writer.sample_rate();
 
     if (config.sample_rate == 0) {
         roc_log(LogError, "can't detect output sample rate, try to set it "
@@ -224,8 +224,7 @@ int main(int argc, char** argv) {
         return 1;
     }
 
-    sndio::Player player(sample_buffer_pool, receiver, writer, writer.frame_size(),
-                         args.oneshot_flag);
+    sndio::Player player(sample_buffer_pool, receiver, sox_writer, args.oneshot_flag);
     if (!player.valid()) {
         roc_log(LogError, "can't create player");
         return 1;
@@ -283,6 +282,8 @@ int main(int argc, char** argv) {
     if (config.default_session.fec.codec != fec::NoCodec) {
         trx.remove_port(repair_port.address);
     }
+
+    sox_writer.close();
 
     return status;
 }

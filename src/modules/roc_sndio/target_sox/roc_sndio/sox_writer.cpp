@@ -34,7 +34,7 @@ SoxWriter::SoxWriter(core::IAllocator& allocator,
 }
 
 SoxWriter::~SoxWriter() {
-    close_();
+    close();
 }
 
 bool SoxWriter::open(const char* name, const char* type) {
@@ -55,6 +55,25 @@ bool SoxWriter::open(const char* name, const char* type) {
     return true;
 }
 
+void SoxWriter::close() {
+    if (!output_) {
+        return;
+    }
+
+    roc_log(LogDebug, "sox writer: closing output");
+
+    int err = sox_close(output_);
+    if (err != SOX_SUCCESS) {
+        roc_panic("sox writer: can't close output: %s", sox_strerror(err));
+    }
+
+    output_ = NULL;
+}
+
+size_t SoxWriter::frame_size() const {
+    return buffer_size_;
+}
+
 size_t SoxWriter::sample_rate() const {
     if (!output_) {
         roc_panic("sox writer: sample_rate: non-open output file or device");
@@ -67,10 +86,6 @@ bool SoxWriter::is_file() const {
         roc_panic("sox writer: is_file: non-open output file or device");
     }
     return is_file_;
-}
-
-size_t SoxWriter::frame_size() const {
-    return buffer_size_;
 }
 
 void SoxWriter::write(audio::Frame& frame) {
@@ -154,21 +169,6 @@ void SoxWriter::write_(const sox_sample_t* data, size_t size) {
             roc_log(LogError, "sox writer: failed to write output buffer");
         }
     }
-}
-
-void SoxWriter::close_() {
-    if (!output_) {
-        return;
-    }
-
-    roc_log(LogDebug, "sox writer: closing output");
-
-    int err = sox_close(output_);
-    if (err != SOX_SUCCESS) {
-        roc_panic("sox writer: can't close output: %s", sox_strerror(err));
-    }
-
-    output_ = NULL;
 }
 
 } // namespace sndio

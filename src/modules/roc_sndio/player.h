@@ -19,6 +19,7 @@
 #include "roc_core/stddefs.h"
 #include "roc_core/thread.h"
 #include "roc_pipeline/ireceiver.h"
+#include "roc_sndio/iwriter.h"
 
 namespace roc {
 namespace sndio {
@@ -31,8 +32,7 @@ public:
     //! Initialize.
     Player(core::BufferPool<audio::sample_t>& buffer_pool,
            pipeline::IReceiver& input,
-           audio::IWriter& output,
-           size_t frame_size,
+           IWriter& output,
            bool oneshot);
 
     virtual ~Player();
@@ -57,7 +57,7 @@ private:
     virtual void run();
 
     pipeline::IReceiver& input_;
-    audio::IWriter& output_;
+    IWriter& output_;
 
     core::Slice<audio::sample_t> frame_buffer_;
 

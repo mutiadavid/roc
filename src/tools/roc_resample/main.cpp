@@ -51,14 +51,14 @@ int main(int argc, char** argv) {
         chunk_size = (size_t)args.chunk_arg;
     }
 
-    sndio::SoxReader reader(pool, Channels, chunk_size, 0);
+    sndio::SoxReader sox_reader(pool, Channels, chunk_size, 0);
 
-    if (!reader.open(args.input_arg, NULL)) {
+    if (!sox_reader.open(args.input_arg, NULL)) {
         roc_log(LogError, "can't open input file: %s", args.input_arg);
         return 1;
     }
 
-    if (!reader.is_file()) {
+    if (!sox_reader.is_file()) {
         roc_log(LogError, "not a file file: %s", args.input_arg);
         return 1;
     }
@@ -67,18 +67,18 @@ int main(int argc, char** argv) {
     if (args.rate_given) {
         writer_sample_rate = (size_t)args.rate_arg;
     } else {
-        writer_sample_rate = reader.sample_rate();
+        writer_sample_rate = sox_reader.sample_rate();
     }
 
-    sndio::SoxWriter output(allocator, Channels, writer_sample_rate);
-    audio::NullWriter null;
+    sndio::SoxWriter sox_writer(allocator, Channels, writer_sample_rate);
+    audio::NullWriter null_writer;
 
     audio::IWriter* writer;
     if (args.output_given) {
-        writer = &output;
+        writer = &sox_writer;
     } else {
         roc_log(LogInfo, "no output given, using null output");
-        writer = &null;
+        writer = &null_writer;
     }
 
     audio::ResamplerConfig resampler_config;
@@ -101,33 +101,37 @@ int main(int argc, char** argv) {
         return 1;
     }
 
-    if (!resampler.set_scaling((float)reader.sample_rate() / writer_sample_rate)) {
+    if (!resampler.set_scaling((float)sox_reader.sample_rate() / writer_sample_rate)) {
         roc_log(LogError, "can't set resampler scaling");
         return 1;
     }
 
     if (args.output_given) {
-        if (!output.open(args.output_arg, NULL)) {
+        if (!sox_writer.open(args.output_arg, NULL)) {
             roc_log(LogError, "can't open output file: %s", args.output_arg);
             return 1;
         }
 
-        if (!output.is_file()) {
+        if (!sox_writer.is_file()) {
             roc_log(LogError, "not a file file: %s", args.output_arg);
             return 1;
         }
     }
 
-    audio::ProfilingWriter profiler(resampler, Channels, reader.sample_rate());
+    audio::ProfilingWriter profiler(resampler, Channels, sox_reader.sample_rate());
 
     int status = 1;
 
-    if (reader.start(profiler)) {
-        reader.join();
+    if (sox_reader.start(profiler)) {
+        sox_reader.join();
         status = 0;
         roc_log(LogInfo, "done");
     } else {
         roc_log(LogError, "can't start reader");
+    }
+
+    if (args.output_given) {
+        sox_writer.close();
     }
 
     return status;

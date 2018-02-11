@@ -16,14 +16,15 @@ namespace sndio {
 
 Player::Player(core::BufferPool<audio::sample_t>& buffer_pool,
                pipeline::IReceiver& input,
-               audio::IWriter& output,
-               size_t frame_size,
+               IWriter& output,
                bool oneshot)
     : input_(input)
     , output_(output)
     , n_bufs_(0)
     , oneshot_(oneshot)
     , stop_(0) {
+    const size_t frame_size = output.frame_size();
+
     if (buffer_pool.buffer_size() < frame_size) {
         roc_log(LogError, "player: buffer size is too small: required=%lu actual=%lu",
                 (unsigned long)frame_size, (unsigned long)buffer_pool.buffer_size());

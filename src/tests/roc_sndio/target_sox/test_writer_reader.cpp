@@ -141,11 +141,13 @@ TEST(writer_reader, writer_start_stop) {
     CHECK(writer.open(file.path(), NULL));
 
     MockReceiver receiver;
-    Player player(buffer_pool, receiver, writer, writer.frame_size(), true);
+    Player player(buffer_pool, receiver, writer, true);
 
     CHECK(player.start());
     player.stop();
     player.join();
+
+    writer.close();
 }
 
 TEST(writer_reader, writer_stop_start) {
@@ -155,11 +157,13 @@ TEST(writer_reader, writer_stop_start) {
     CHECK(writer.open(file.path(), NULL));
 
     MockReceiver receiver;
-    Player player(buffer_pool, receiver, writer, writer.frame_size(), true);
+    Player player(buffer_pool, receiver, writer, true);
 
     player.stop();
     CHECK(player.start());
     player.join();
+
+    writer.close();
 }
 
 TEST(writer_reader, writer_start_start) {
@@ -169,12 +173,14 @@ TEST(writer_reader, writer_start_start) {
     CHECK(writer.open(file.path(), NULL));
 
     MockReceiver receiver;
-    Player player(buffer_pool, receiver, writer, writer.frame_size(), true);
+    Player player(buffer_pool, receiver, writer, true);
 
     CHECK(player.start());
     CHECK(!player.start());
     player.stop();
     player.join();
+
+    writer.close();
 }
 
 TEST(writer_reader, writer_is_file) {
@@ -184,6 +190,8 @@ TEST(writer_reader, writer_is_file) {
     CHECK(writer.open(file.path(), NULL));
 
     CHECK(writer.is_file());
+
+    writer.close();
 }
 
 TEST(writer_reader, writer_sample_rate_auto) {
@@ -192,6 +200,8 @@ TEST(writer_reader, writer_sample_rate_auto) {
     core::TempFile file("test.wav");
     CHECK(writer.open(file.path(), NULL));
     CHECK(writer.sample_rate() != 0);
+
+    writer.close();
 }
 
 TEST(writer_reader, writer_sample_rate_force) {
@@ -200,6 +210,8 @@ TEST(writer_reader, writer_sample_rate_force) {
     core::TempFile file("test.wav");
     CHECK(writer.open(file.path(), NULL));
     CHECK(writer.sample_rate() == SampleRate);
+
+    writer.close();
 }
 
 TEST(writer_reader, reader_noop) {
@@ -224,9 +236,11 @@ TEST(writer_reader, reader_start_stop) {
         SoxWriter writer(allocator, ChMask, SampleRate);
         CHECK(writer.open(file.path(), NULL));
 
-        Player player(buffer_pool, receiver, writer, writer.frame_size(), true);
+        Player player(buffer_pool, receiver, writer, true);
         CHECK(player.start());
         player.join();
+
+        writer.close();
     }
 
     SoxReader reader(buffer_pool, ChMask, FrameSize, SampleRate);
@@ -252,9 +266,11 @@ TEST(writer_reader, reader_stop_start) {
         SoxWriter writer(allocator, ChMask, SampleRate);
         CHECK(writer.open(file.path(), NULL));
 
-        Player player(buffer_pool, receiver, writer, writer.frame_size(), true);
+        Player player(buffer_pool, receiver, writer, true);
         CHECK(player.start());
         player.join();
+
+        writer.close();
     }
 
     SoxReader reader(buffer_pool, ChMask, FrameSize, SampleRate);
@@ -280,9 +296,11 @@ TEST(writer_reader, reader_start_start) {
         SoxWriter writer(allocator, ChMask, SampleRate);
         CHECK(writer.open(file.path(), NULL));
 
-        Player player(buffer_pool, receiver, writer, writer.frame_size(), true);
+        Player player(buffer_pool, receiver, writer, true);
         CHECK(player.start());
         player.join();
+
+        writer.close();
     }
 
     SoxReader reader(buffer_pool, ChMask, FrameSize, SampleRate);
@@ -307,9 +325,11 @@ TEST(writer_reader, reader_is_file) {
         SoxWriter writer(allocator, ChMask, SampleRate);
         CHECK(writer.open(file.path(), NULL));
 
-        Player player(buffer_pool, receiver, writer, writer.frame_size(), true);
+        Player player(buffer_pool, receiver, writer, true);
         CHECK(player.start());
         player.join();
+
+        writer.close();
     }
 
     SoxReader reader(buffer_pool, ChMask, FrameSize, SampleRate);
@@ -328,9 +348,11 @@ TEST(writer_reader, reader_sample_rate_auto) {
         SoxWriter writer(allocator, ChMask, SampleRate);
         CHECK(writer.open(file.path(), NULL));
 
-        Player player(buffer_pool, receiver, writer, writer.frame_size(), true);
+        Player player(buffer_pool, receiver, writer, true);
         CHECK(player.start());
         player.join();
+
+        writer.close();
     }
 
     SoxReader reader(buffer_pool, ChMask, FrameSize, 0);
@@ -349,9 +371,11 @@ TEST(writer_reader, reader_sample_rate_force) {
         SoxWriter writer(allocator, ChMask, SampleRate);
         CHECK(writer.open(file.path(), NULL));
 
-        Player player(buffer_pool, receiver, writer, writer.frame_size(), true);
+        Player player(buffer_pool, receiver, writer, true);
         CHECK(player.start());
         player.join();
+
+        writer.close();
     }
 
     SoxReader reader(buffer_pool, ChMask, FrameSize, SampleRate * 2);
@@ -372,11 +396,13 @@ TEST(writer_reader, write_read) {
         SoxWriter writer(allocator, ChMask, SampleRate);
         CHECK(writer.open(file.path(), NULL));
 
-        Player player(buffer_pool, receiver, writer, writer.frame_size(), true);
+        Player player(buffer_pool, receiver, writer, true);
         CHECK(player.start());
         player.join();
 
         CHECK(receiver.num_returned() >= NumSamples - MaxBufSize);
+
+        writer.close();
     }
 
     SoxReader reader(buffer_pool, ChMask, FrameSize, SampleRate);
@@ -401,9 +427,11 @@ TEST(writer_reader, overwrite) {
         SoxWriter writer(allocator, ChMask, SampleRate);
         CHECK(writer.open(file.path(), NULL));
 
-        Player player(buffer_pool, receiver, writer, writer.frame_size(), true);
+        Player player(buffer_pool, receiver, writer, true);
         CHECK(player.start());
         player.join();
+
+        writer.close();
     }
 
     receiver.add(NumSamples);
@@ -415,9 +443,11 @@ TEST(writer_reader, overwrite) {
         SoxWriter writer(allocator, ChMask, SampleRate);
         CHECK(writer.open(file.path(), NULL));
 
-        Player player(buffer_pool, receiver, writer, writer.frame_size(), true);
+        Player player(buffer_pool, receiver, writer, true);
         CHECK(player.start());
         player.join();
+
+        writer.close();
     }
 
     size_t num_returned2 = receiver.num_returned() - num_returned1;

@@ -14,12 +14,12 @@
 
 #include <sox.h>
 
-#include "roc_audio/iwriter.h"
 #include "roc_core/iallocator.h"
 #include "roc_core/noncopyable.h"
 #include "roc_core/stddefs.h"
 #include "roc_core/unique_ptr.h"
 #include "roc_packet/units.h"
+#include "roc_sndio/iwriter.h"
 
 namespace roc {
 namespace sndio {
@@ -27,13 +27,9 @@ namespace sndio {
 //! SoX audio writer.
 //! @remarks
 //!  Encodes samples them and and writes to output file or audio driver.
-class SoxWriter : public audio::IWriter, public core::NonCopyable<> {
+class SoxWriter : public IWriter, public core::NonCopyable<> {
 public:
     //! Initialize.
-    //!
-    //! @b Parameters
-    //!  - @p channels defines bitmask of enabled channels in input buffers
-    //!  - @p sample_rate defines sample rate of input buffers
     SoxWriter(core::IAllocator& allocator,
               packet::channel_mask_t channels,
               size_t sample_rate);
@@ -41,32 +37,19 @@ public:
     virtual ~SoxWriter();
 
     //! Open output file or device.
-    //!
-    //! @b Parameters
-    //!  - @p name is output file or device name, "-" for stdout.
-    //!  - @p type is codec or driver name.
-    //!
-    //! @remarks
-    //!  If @p name or @p type are NULL, they're autodetected.
-    //!
-    //! @pre
-    //!  Should be called once before calling start().
-    bool open(const char* name, const char* type);
+    virtual bool open(const char* name, const char* type);
 
-    //! Get sample rate of an output file or a device.
-    //!
-    //! @pre
-    //!  Output file or device should be opened.
-    size_t sample_rate() const;
-
-    //! Returns true if output is a real file.
-    //!
-    //! @pre
-    //!  Output file or device should be opened.
-    bool is_file() const;
+    //! Close output file or device.
+    virtual void close();
 
     //! Returns recommended frame size.
-    size_t frame_size() const;
+    virtual size_t frame_size() const;
+
+    //! Get sample rate of an output file or a device.
+    virtual size_t sample_rate() const;
+
+    //! Returns true if output is a real file.
+    virtual bool is_file() const;
 
     //! Write audio frame.
     virtual void write(audio::Frame& frame);
