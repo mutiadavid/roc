@@ -26,14 +26,25 @@ public:
     //! Get buffer alignment requirement.
     virtual size_t alignment() const = 0;
 
+    //! Start block.
+    //!
+    //! @remarks
+    //!  Perform an initial setup for a current block. Should be called as a
+    //!  first encoder operation for the current block.
+    virtual bool begin(size_t sblen, size_t rblen) = 0;
+
     //! Store source or repair packet buffer for current block.
     virtual void set(size_t index, const core::Slice<uint8_t>& buffer) = 0;
 
     //! Fill all repair packets in current block.
-    virtual void commit() = 0;
+    virtual void fill() = 0;
 
-    //! Reset current block.
-    virtual void reset() = 0;
+    //! Finish block.
+    //!
+    //! @remarks
+    //!  Cleanups the resources allocated for a current block. Should be called
+    //!  as a last encoder operation for the current block.
+    virtual void end() = 0;
 };
 
 } // namespace fec
